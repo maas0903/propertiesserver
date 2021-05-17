@@ -1,0 +1,227 @@
+@page "/brandersettings"
+
+
+@using System.Net.Http
+@using System.Net.Http.Headers
+@using System.Net.Http.Json
+@using System.Text.Json
+@inject HttpClient Http
+@using System.Net
+@using System.IO
+@using Newtonsoft.Json
+
+<!--StyleSheet Resource="Pages/BranderSettings.css" Assembly="GetType().Assembly"></StyleSheet-->
+
+<div style="width:100%">
+    <div style="background-color:cyan; text-align:center">
+        <b>Brander</b>
+    </div>
+    <div style="background-color:lightgreen; height:900px; width:30%; float:left;">
+        <b>Settings</b><br />
+        <p><label> Summer (Original: @OriginalSummer) </label> </p>
+        <p><input @bind="Summer" /></p>
+        <p><label> Duration On (Original: @OriginalDurationOn) </label> </p>
+        <p><input @bind="DurationOn" /></p>
+        <p>
+            <label> Hour On (Original: @OriginalHourOn) </label> <label> Minute On (Original: @OriginalMinuteOn) </label>
+        </p>
+        <p><input @bind="HourOn" @bind:event="oninput" /><input @bind="MinuteOn" /></p>
+        <p>
+            <label> Hour Off (Original: @OriginalHourOff) </label> <label>
+                Minute Off (Original: @OriginalMinuteOff)
+            </label>
+        </p>
+        <p><input @bind="HourOff" /><input @bind="MinuteOff" /></p>
+        <p><label> Override (Original: @OriginalOverride) </label> </p>
+        <p><input @bind="Override" /></p>
+        <p><label> Degrees Off (Original: @OriginalDegreesOff) </label> </p>
+        <p><input @bind="DegreesOff" /></p>
+        <p><label> Absolute Min (Original: @OriginalAbsoluteMin) </label> </p>
+        <p><input @bind="AbsoluteMin" /></p>
+        <p><label> Sensor URL (Original: @OriginalurlName) </label> </p>
+        <p><input @bind="urlName" /></p>
+
+        <p><button class="btn btn-primary" @onclick="setBranderSettings">Set Brander Settings</button></p>
+        <p><button class="btn btn-primary" @onclick="getBranderStatus">Get Brander Status</button></p>
+
+    </div>
+    <div style="background-color:orange; height:900px; width:70%; float:left;">
+        <b>Status</b><br />
+        <label>Deg C: @gradeC</label><br />
+        <label>Status @statusString</label>
+        <label>Full Status: @statusContent</label>
+
+
+        <!--table>
+        <tr>
+        @foreach (var c in dyn.cols)
+        {
+        <td style="border: 1px solid black;">@c.Value</td>
+        }
+        </tr>
+        @foreach (var r in dyn.rows)
+        {
+        <tr>
+            @foreach (var d in r)
+                    {
+            <td style="border: 1px solid black;">@d.Value</td>
+                    }
+        </tr>
+        }
+        </table-->
+    </div>
+    <div style="background-color:lightblue; clear:both">
+        <center>
+            <p>Response body returned by the server:</p>
+            <p>@responseBody</p>
+        </center>
+    </div>
+</div>
+
+@code {
+    dynamic dyn;
+    public DateTime? Date1 { get; set; } = DateTime.Now.AddDays(-10);
+
+    public class BranderSettingsClass
+    {
+        public int HourOn { get; set; }
+        public int MinuteOn { get; set; }
+        public int DurationOn { get; set; }
+        public int Override { get; set; }
+        public int Summer { get; set; }
+        public int HourOff { get; set; }
+        public int MinuteOff { get; set; }
+        public double DegreesOff { get; set; }
+        public double AbsoluteMin { get; set; }
+        public string urlName { get; set; }
+    }
+
+    public class BranderStatus
+    {
+        [JsonExtensionData]
+        private IDictionary<string, string> statusData;
+    }
+
+    private BranderSettingsClass branderSettings;
+    private int HourOn;
+    private int MinuteOn;
+    private int DurationOn;
+    private int Override;
+    private int Summer;
+    private int HourOff;
+    private int MinuteOff;
+    private double DegreesOff;
+    private double AbsoluteMin;
+    private string urlName;
+
+    private int OriginalHourOn;
+    private int OriginalMinuteOn;
+    private int OriginalDurationOn;
+    private int OriginalOverride;
+    private int OriginalSummer;
+    private int OriginalHourOff;
+    private int OriginalMinuteOff;
+    private double OriginalDegreesOff;
+    private double OriginalAbsoluteMin;
+    private string OriginalurlName;
+    private string statusContent;
+    private string statusString;
+    private string gradeC;
+
+
+    private string responseBody;
+
+    private string settingsUrl = "http://pastei04.local/MelektroApi/";
+
+    private string statusUrl = "http://192.168.63.61/status";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await getBranderSettings();
+        await getBranderStatus();
+    }
+
+    protected async Task getBranderSettings()
+    {
+        branderSettings = await Http.GetFromJsonAsync<BranderSettingsClass>(settingsUrl + "getbrandersettings2");
+        HourOn = branderSettings.HourOn;
+        MinuteOn = branderSettings.MinuteOn;
+        DurationOn = branderSettings.DurationOn;
+        Override = branderSettings.Override;
+        Summer = branderSettings.Summer;
+        HourOff = branderSettings.HourOff;
+        MinuteOff = branderSettings.MinuteOff;
+        DegreesOff = branderSettings.DegreesOff;
+        AbsoluteMin = branderSettings.AbsoluteMin;
+        urlName = branderSettings.urlName;
+
+        OriginalHourOn = HourOn;
+        OriginalMinuteOn = MinuteOn;
+        OriginalDurationOn = DurationOn;
+        OriginalOverride = Override;
+        OriginalSummer = Summer;
+        OriginalHourOff = HourOff;
+        OriginalMinuteOff = MinuteOff;
+        OriginalDegreesOff = DegreesOff;
+        OriginalAbsoluteMin = AbsoluteMin;
+        OriginalurlName = urlName;
+    }
+
+    protected async Task getBranderStatus()
+    {
+        using (HttpClient client = new HttpClient())
+        {
+            statusContent = await client.GetStringAsync(statusUrl);
+        }
+        await showBranderStatus();
+    }
+
+    protected async Task showBranderStatus()
+    {
+        dyn = JsonConvert.DeserializeObject(statusContent);
+        statusString = dyn.status;
+        gradeC = dyn.degrees;
+    }
+
+    protected async Task setBranderSettings()
+    {
+        using (HttpClient client = new HttpClient())
+        {
+            var requestContent =
+                new FormUrlEncodedContent(new[]
+                {
+new KeyValuePair<string, string>("summer" , Summer .ToString()),
+new KeyValuePair<string, string>("durationOn" , DurationOn .ToString()),
+new KeyValuePair<string, string>("hourOn" , HourOn .ToString()),
+new KeyValuePair<string, string>("minuteOn" , MinuteOn .ToString()),
+new KeyValuePair<string, string>("hourOff" , HourOff .ToString()),
+new KeyValuePair<string, string>("minuteOff" , MinuteOff .ToString()),
+new KeyValuePair<string, string>("override" , Override .ToString()),
+new KeyValuePair<string, string>("degreesOff" , DegreesOff .ToString()),
+new KeyValuePair<string, string>("absoluteMin", AbsoluteMin.ToString()),
+new KeyValuePair<string, string>("urlName" , urlName),
+                });
+            HttpResponseMessage response = await client.PutAsync(settingsUrl + "putbrandersettings2", requestContent);
+
+            HttpContent responseContent = response.Content;
+            using (var reader = new StreamReader(await responseContent.ReadAsStreamAsync()))
+            {
+                responseBody = await reader.ReadToEndAsync();
+            }
+
+            OriginalSummer = Summer;
+            OriginalDurationOn = DurationOn;
+            OriginalHourOn = HourOn;
+            OriginalMinuteOn = MinuteOn;
+            OriginalHourOff = HourOff;
+            OriginalMinuteOff = MinuteOff;
+            OriginalOverride = Override;
+            OriginalDegreesOff = DegreesOff;
+            OriginalAbsoluteMin = AbsoluteMin;
+            OriginalurlName = urlName;
+
+            await getBranderStatus();
+            await showBranderStatus();
+        }
+    }
+}
